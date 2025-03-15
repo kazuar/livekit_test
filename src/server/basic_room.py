@@ -58,6 +58,7 @@ async def main(room: rtc.Room) -> None:
     ):
         logging.info("track subscribed: %s", publication.sid)
         if track.kind == rtc.TrackKind.KIND_VIDEO:
+            logging.info("Processing video track from %s", participant.identity)
             # Create a video source from the incoming track with standard resolution
             video_source = rtc.VideoSource(width=1280, height=720)  # 720p resolution
             video_track = rtc.LocalVideoTrack.create_video_track("echo", video_source)
@@ -65,30 +66,36 @@ async def main(room: rtc.Room) -> None:
             async def echo_video():
                 try:
                     video_stream = rtc.VideoStream(track)
+                    frame_count = 0
                     async for frame_event in video_stream:
+                        frame_count += 1
+                        if frame_count % 30 == 0:  # Log every 30 frames
+                            logging.info("Processed %d frames from %s", frame_count, participant.identity)
+                        
                         frame = frame_event.frame
-                        # Create a new frame with only the valid attributes
                         new_frame = rtc.VideoFrame(
                             data=frame.data,
                             width=frame.width,
                             height=frame.height,
-                            type=frame.type  # Using type instead of format
+                            type=frame.type
                         )
-                        # Send the frame to the video source
                         video_source.capture_frame(new_frame)
                 except Exception as e:
                     logging.error("Error in echo_video: %s", e)
-                    if 'frame' in locals():
-                        logging.error("Frame info: %s", dir(frame))
-                        logging.error("Frame attributes - width: %s, height: %s, type: %s", 
-                                    frame.width, frame.height, frame.type)
-                    logging.error("Frame event info: %s", dir(frame_event))
 
-            # Start echoing in the background
+            logging.info("Starting echo task for %s", participant.identity)
             asyncio.create_task(echo_video())
             
-            # Publish the echo track
-            asyncio.create_task(room.local_participant.publish_track(video_track))
+            logging.info("Publishing echo track for %s", participant.identity)
+            asyncio.create_task(
+                room.local_participant.publish_track(
+                    video_track,
+                    options=rtc.TrackPublishOptions(
+                        video_codec=rtc.VideoCodec.AV1,
+                        simulcast=False
+                    )
+                )
+            )
 
         elif track.kind == rtc.TrackKind.KIND_AUDIO:
             print("Subscribed to an Audio Track")

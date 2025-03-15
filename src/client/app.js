@@ -23,10 +23,15 @@ class VideoChat {
         
         // Set up room event listeners
         this.room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
-            console.log('Track subscribed:', track.kind, 'from participant:', participant.identity);
+            console.log('Track subscribed:', {
+                kind: track.kind,
+                participant: participant.identity,
+                trackSid: publication.trackSid,
+                source: publication.source
+            });
             if (track.kind === 'video') {
                 track.attach(this.remoteVideo);
-                console.log('Attached remote video track');
+                console.log('Attached remote video track', track);
             }
         });
         
@@ -62,13 +67,20 @@ class VideoChat {
 
             // Publish tracks one by one
             for (const track of tracks) {
-                await this.room.localParticipant.publishTrack(track);
+                await this.room.localParticipant.publishTrack(
+                    track,
+                    {
+                        videoCodec: 'av1',
+                        simulcast: false  // Optional: enable simulcast if needed
+                    }
+                );
             }
 
             // Attach local video
             const videoTrack = tracks.find(track => track.kind === 'video');
             if (videoTrack) {
                 videoTrack.attach(this.localVideo);
+                console.log('Attached local video track', videoTrack);
             }
 
         } catch (error) {
