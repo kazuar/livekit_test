@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LiveKit Video Echo</title>
+    <style>
+        .video-container {
+            display: flex;
+            gap: 20px;
+        }
+        video {
+            width: 400px;
+            height: 300px;
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <video id="localVideo" autoplay muted></video>
+        <video id="remoteVideo" autoplay></video>
+    </div>
+    <button id="startButton">Start Stream</button>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
