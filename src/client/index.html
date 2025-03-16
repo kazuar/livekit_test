@@ -4,20 +4,51 @@
     <title>LiveKit Video Echo</title>
     <style>
         .video-container {
-            display: flex;
-            gap: 20px;
+            width: 400px;
         }
         video {
-            width: 400px;
+            width: 100%;
             height: 300px;
             background: #333;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            justify-content: center;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .video-container {
+            text-align: center;
+        }
+        
+        h2 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .codec-info {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #666;
         }
     </style>
 </head>
 <body>
-    <div class="video-container">
-        <video id="localVideo" autoplay muted></video>
-        <video id="remoteVideo" autoplay></video>
+    <div class="container">
+        <div class="video-container">
+            <h2>Local Video</h2>
+            <video id="local-video" autoplay playsinline muted></video>
+            <div id="local-codec" class="codec-info"></div>
+        </div>
+        <div class="video-container">
+            <h2>Processed Video</h2>
+            <video id="processed-video" autoplay playsinline></video>
+            <div id="processed-codec" class="codec-info"></div>
+        </div>
     </div>
     <button id="startButton">Start Stream</button>
     <script type="module" src="app.js"></script>

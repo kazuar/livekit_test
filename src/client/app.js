@@ -9,14 +9,14 @@ import {
 const LIVEKIT_URL = 'ws://localhost:7880';
 
 // For demo purposes - you would typically create this token on your server
-const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDIxNDY2NzEsImlzcyI6ImRldmtleSIsIm5hbWUiOiJ0ZXN0X3VzZXIiLCJuYmYiOjE3NDIwNjAyNzEsInN1YiI6InRlc3RfdXNlciIsInZpZGVvIjp7InJvb20iOiJ0ZXN0X3Jvb20iLCJyb29tSm9pbiI6dHJ1ZX19.7-RIRzgXNHxeKyOnK1QSCyiu8y4HmnqaFPxflnMUnlY';
+const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDIyNTExNTIsImlzcyI6ImRldmtleSIsIm5hbWUiOiJ0ZXN0X3VzZXIiLCJuYmYiOjE3NDIxNjQ3NTIsInN1YiI6InRlc3RfdXNlciIsInZpZGVvIjp7InJvb20iOiJ0ZXN0X3Jvb20iLCJyb29tSm9pbiI6dHJ1ZX19.tKRQ4joqGFTqeVl2BUs6pAhNdlj-h7LMHIriwM8wOYg';
 
 class VideoChat {
     constructor() {
         this.room = new Room();
         console.log(this.room.name);
-        this.localVideo = document.getElementById('localVideo');
-        this.remoteVideo = document.getElementById('remoteVideo');
+        this.localVideo = document.getElementById('local-video');
+        this.remoteVideo = document.getElementById('processed-video');
         this.startButton = document.getElementById('startButton');
         
         this.startButton.addEventListener('click', () => this.startStream());
@@ -32,6 +32,14 @@ class VideoChat {
             if (track.kind === 'video') {
                 track.attach(this.remoteVideo);
                 console.log('Attached remote video track', track);
+                
+                // Add codec info display
+                const codecEl = document.getElementById('processed-codec');
+                console.log('publication', publication);
+                const codec = publication.mimeType;
+                if (codec) {
+                    codecEl.textContent = `Codec: ${codec}`;
+                }
             }
         });
         
@@ -81,6 +89,16 @@ class VideoChat {
             if (videoTrack) {
                 videoTrack.attach(this.localVideo);
                 console.log('Attached local video track', videoTrack);
+                
+                // Add codec info for local video
+                const localCodecEl = document.getElementById('local-codec');
+                const codec = videoTrack.codec || 'detecting...';
+                localCodecEl.textContent = `Codec: ${codec}`;
+                
+                // Update codec info when it becomes available
+                videoTrack.on('codecChanged', (codec) => {
+                    localCodecEl.textContent = `Codec: ${codec}`;
+                });
             }
 
         } catch (error) {
