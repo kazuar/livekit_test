@@ -8,4 +8,6 @@ dependencies = [
     "ipython>=8.34.0",
     "livekit>=0.21.3",
     "livekit-api>=0.8.2",
+    "numpy>=2.2.4",
+    "opencv-python>=4.11.0.86",
 ]
