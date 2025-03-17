@@ -3,6 +3,7 @@ import {
     RoomEvent,
     LocalTrack,
     createLocalTracks,
+    createLocalVideoTrack,
 } from 'livekit-client';
 
 // LiveKit server URL - adjust if your server runs on a different port
@@ -13,7 +14,41 @@ const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDIyNTExNTIsImlz
 
 class VideoChat {
     constructor() {
-        this.room = new Room();
+        this.room = new Room({
+            videoCaptureDefaults: {
+                deviceId: 'default',
+                facingMode: 'user',
+                resolution: {
+                    width: 1280,
+                    height: 720,
+                    frameRate: 30,
+                },
+            },
+            publishDefaults: {
+                videoEncoding: {
+                  maxBitrate: 1_500_000,
+                  maxFramerate: 30,
+                },
+                videoSimulcastLayers: [
+                  {
+                    width: 640,
+                    height: 360,
+                    encoding: {
+                      maxBitrate: 500_000,
+                      maxFramerate: 20,
+                    },
+                  },
+                  {
+                    width: 320,
+                    height: 180,
+                    encoding: {
+                      maxBitrate: 150_000,
+                      maxFramerate: 15,
+                    },
+                  },
+                ],
+            },
+        });
         console.log(this.room.name);
         this.localVideo = document.getElementById('local-video');
         this.remoteVideo = document.getElementById('processed-video');
@@ -64,9 +99,14 @@ class VideoChat {
             this.startButton.disabled = true;
             
             // Get local camera track
-            const tracks = await createLocalTracks({
-                audio: true,
-                video: true
+            const track = await createLocalVideoTrack({
+                deviceId: 'default',
+                facingMode: 'user',
+                resolution: {
+                    width: 1280,
+                    height: 720,
+                    frameRate: 30,
+                },
             });
 
             // Connect to the LiveKit room
@@ -74,32 +114,31 @@ class VideoChat {
             console.log('Connected to room:', this.room.name);
 
             // Publish tracks one by one
-            for (const track of tracks) {
-                await this.room.localParticipant.publishTrack(
-                    track,
+            await this.room.localParticipant.publishTrack(
+                track,
                     {
                         videoCodec: 'av1',
                         simulcast: false  // Optional: enable simulcast if needed
                     }
-                );
-            }
+            );
 
             // Attach local video
-            const videoTrack = tracks.find(track => track.kind === 'video');
-            if (videoTrack) {
-                videoTrack.attach(this.localVideo);
-                console.log('Attached local video track', videoTrack);
-                
-                // Add codec info for local video
-                const localCodecEl = document.getElementById('local-codec');
-                const codec = videoTrack.codec || 'detecting...';
+            track.attach(this.localVideo);
+            console.log('Attached local video track', track);
+            
+            // Add codec info for local video
+            const localCodecEl = document.getElementById('local-codec');
+            const codec = track.codec || 'detecting...';
+            localCodecEl.textContent = `Codec: ${codec}`;
+            
+            // Update codec info when it becomes available
+            track.on('codecChanged', (codec) => {
                 localCodecEl.textContent = `Codec: ${codec}`;
-                
-                // Update codec info when it becomes available
-                videoTrack.on('codecChanged', (codec) => {
-                    localCodecEl.textContent = `Codec: ${codec}`;
-                });
-            }
+            });
+
+            // Log height and width
+            console.log('Local video track height:', track.height);
+            console.log('Local video track width:', track.width);
 
         } catch (error) {
             console.error('Error starting stream:', error);

@@ -3,6 +3,8 @@ import logging
 from signal import SIGINT, SIGTERM
 from typing import Union
 import os
+import numpy as np
+import cv2
 
 from livekit import api, rtc
 
@@ -64,6 +66,7 @@ async def main(room: rtc.Room) -> None:
             video_track = rtc.LocalVideoTrack.create_video_track("echo", video_source)
             
             async def echo_video():
+                logging.info("Starting echo_video")
                 try:
                     video_stream = rtc.VideoStream(track)
                     frame_count = 0
@@ -73,15 +76,69 @@ async def main(room: rtc.Room) -> None:
                             logging.info("Processed %d frames from %s", frame_count, participant.identity)
                         
                         frame = frame_event.frame
+                        width, height = frame.width, frame.height
+                        frame_type = frame.type
+                        data_size = len(frame.data)
+                        logging.debug(f"Frame dimensions: {width}x{height}, data size: {data_size}")
+                        
+                        # Check if it's YUV420 format (1.5 bytes per pixel)
+                        if data_size == (width * height * 3 // 2):
+                            logging.debug("Detected YUV420 format")
+                            frame_array = np.frombuffer(frame.data, dtype=np.uint8)
+                            # Reshape for YUV420
+                            yuv = frame_array.reshape((height * 3 // 2, width))
+                            # Convert YUV420 to BGR
+                            frame = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR_I420)
+                        else:
+                            logging.error(f"Unexpected data size: {data_size} bytes for {width}x{height} frame")
+                            continue  # Skip this frame
+                        
+                        logging.debug(f"Frame shape after conversion: {frame.shape}")
+
+                        # Apply more pronounced edge detection
+                        edges = cv2.Canny(frame, 50, 150)  # Adjusted thresholds
+                        edges = cv2.dilate(edges, None)  # Make edges thicker
+
+                        # Create colored edge overlay with brighter color
+                        colored_edges = np.zeros_like(frame)
+                        colored_edges[edges > 0] = [0, 255, 0]  # Bright green edges
+                        
+                        # Add some visual effects
+                        blurred = cv2.GaussianBlur(frame, (5, 5), 0)
+                        sharpened = cv2.addWeighted(frame, 1.5, blurred, -0.5, 0)
+                        
+                        # Blend original frame with edges more prominently
+                        processed_frame = cv2.addWeighted(sharpened, 0.6, colored_edges, 0.4, 0)
+                        
+                        # Add text overlay to confirm processing
+                        cv2.putText(
+                            processed_frame,
+                            'Processed Feed',
+                            (50, 50),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            1,
+                            (0, 255, 0),
+                            2
+                        )
+                        
+                        # Convert processed frame back to YUV420 format
+                        if processed_frame.shape != (720, 1280, 3):
+                            processed_frame = cv2.resize(processed_frame, (1280, 720))
+                            logging.debug(f"Resized processed frame to 1280x720")
+                        
+                        # Convert RGB to YUV420
+                        yuv420_frame = cv2.cvtColor(processed_frame, cv2.COLOR_RGB2YUV_I420)
+                        
                         new_frame = rtc.VideoFrame(
-                            data=frame.data,
-                            width=frame.width,
-                            height=frame.height,
-                            type=frame.type
+                            data=yuv420_frame.tobytes(),
+                            width=1280,
+                            height=720,
+                            type=frame_type
                         )
                         video_source.capture_frame(new_frame)
                 except Exception as e:
                     logging.error("Error in echo_video: %s", e)
+                    logging.exception("Full traceback:")  # This will log the full stack trace
 
             logging.info("Starting echo task for %s", participant.identity)
             asyncio.create_task(echo_video())
