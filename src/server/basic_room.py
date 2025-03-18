@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import json
 from signal import SIGINT, SIGTERM
 from typing import Union
 import os
@@ -12,6 +13,10 @@ from livekit import api, rtc
 
 
 async def main(room: rtc.Room) -> None:
+    metadata = {
+        "video_text": "Processed Feed"
+    }
+
     @room.on("participant_connected")
     def on_participant_connected(participant: rtc.RemoteParticipant) -> None:
         logging.info("participant connected: %s %s", participant.sid, participant.identity)
@@ -113,7 +118,7 @@ async def main(room: rtc.Room) -> None:
                         # Add text overlay to confirm processing
                         cv2.putText(
                             processed_frame,
-                            'Processed Feed',
+                            metadata["video_text"],
                             (50, 50),
                             cv2.FONT_HERSHEY_SIMPLEX,
                             1,
@@ -180,7 +185,10 @@ async def main(room: rtc.Room) -> None:
     @room.on("data_received")
     def on_data_received(data: rtc.DataPacket):
         logging.info("received data from %s: %s", data.participant.identity, data.data)
-
+        json_data = json.loads(data.data)        
+        video_text = json_data.get('prompt', 'Processed Feed')
+        logging.info("video text: %s", video_text)
+        metadata["video_text"] = video_text
     @room.on("connection_quality_changed")
     def on_connection_quality_changed(participant: rtc.Participant, quality: rtc.ConnectionQuality):
         logging.info("connection quality changed for %s", participant.identity)

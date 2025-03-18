@@ -4,13 +4,14 @@ import {
     LocalTrack,
     createLocalTracks,
     createLocalVideoTrack,
+    DataPacket_Kind
 } from 'livekit-client';
 
 // LiveKit server URL - adjust if your server runs on a different port
 const LIVEKIT_URL = 'ws://localhost:7880';
 
 // For demo purposes - you would typically create this token on your server
-const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDIyNTExNTIsImlzcyI6ImRldmtleSIsIm5hbWUiOiJ0ZXN0X3VzZXIiLCJuYmYiOjE3NDIxNjQ3NTIsInN1YiI6InRlc3RfdXNlciIsInZpZGVvIjp7InJvb20iOiJ0ZXN0X3Jvb20iLCJyb29tSm9pbiI6dHJ1ZX19.tKRQ4joqGFTqeVl2BUs6pAhNdlj-h7LMHIriwM8wOYg';
+const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI0MTU3NzUsImlzcyI6ImRldmtleSIsIm5hbWUiOiJ0ZXN0X3VzZXIiLCJuYmYiOjE3NDIzMjkzNzUsInN1YiI6InRlc3RfdXNlciIsInZpZGVvIjp7InJvb20iOiJ0ZXN0X3Jvb20iLCJyb29tSm9pbiI6dHJ1ZX19.F7dI4GrX72jvfJhJC6NrFGOzSrlm1pClI4lwjQ7I07o';
 
 class VideoChat {
     constructor() {
@@ -91,6 +92,17 @@ class VideoChat {
         this.room.on(RoomEvent.ParticipantDisconnected, (participant) => {
             console.log('Participant disconnected:', participant.identity);
         });
+
+        // Add prompt functionality
+        this.promptInput = document.getElementById('promptInput');
+        this.sendPromptButton = document.getElementById('sendPrompt');
+        
+        this.sendPromptButton.addEventListener('click', () => this.sendPrompt());
+        this.promptInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                this.sendPrompt();
+            }
+        });
     }
 
     async startStream() {
@@ -144,6 +156,26 @@ class VideoChat {
             console.error('Error starting stream:', error);
             this.startButton.disabled = false;
         }
+    }
+
+    sendPrompt() {
+        const prompt = this.promptInput.value.trim();
+        if (!prompt || !this.room.localParticipant) return;
+
+        const data = JSON.stringify({prompt: prompt})
+        console.log('Sending prompt:', data);
+        const encodedData = new TextEncoder().encode(data);
+        console.log('Encoded data:', encodedData);
+
+        this.room.localParticipant.publishData(
+            encodedData,
+            DataPacket_Kind.RELIABLE,
+            {
+                destinationIdentities: ['python-bot']
+            }
+        );
+        
+        this.promptInput.value = '';
     }
 }
 
