@@ -11,7 +11,7 @@ import {
 const LIVEKIT_URL = 'ws://localhost:7880';
 
 // For demo purposes - you would typically create this token on your server
-const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI0MTU3NzUsImlzcyI6ImRldmtleSIsIm5hbWUiOiJ0ZXN0X3VzZXIiLCJuYmYiOjE3NDIzMjkzNzUsInN1YiI6InRlc3RfdXNlciIsInZpZGVvIjp7InJvb20iOiJ0ZXN0X3Jvb20iLCJyb29tSm9pbiI6dHJ1ZX19.F7dI4GrX72jvfJhJC6NrFGOzSrlm1pClI4lwjQ7I07o';
+const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI1ODg5NTUsImlzcyI6ImRldmtleSIsIm5hbWUiOiJ0ZXN0X3VzZXIiLCJuYmYiOjE3NDI1MDI1NTUsInN1YiI6InRlc3RfdXNlciIsInZpZGVvIjp7InJvb20iOiJ0ZXN0X3Jvb20iLCJyb29tSm9pbiI6dHJ1ZX19.V28jY8sW15NgRkda3BrxV7CilTYkYpf1hqS6G6uLM6Q';
 
 class VideoChat {
     constructor() {
