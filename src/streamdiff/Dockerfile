@@ -1,6 +1,8 @@
 FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
 
 RUN apt-get update && apt-get install -y \
+    libsm6 \
+    libxext6 \
     git \
     python3 \
     python3-pip \
