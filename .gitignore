@@ -178,3 +178,4 @@ node_modules/
 
 # project files
 run_local.sh
+/StreamDiffusion
