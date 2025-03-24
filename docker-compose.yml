@@ -8,6 +8,13 @@ services:
       - "8000:8000"
     environment:
       - LIVEKIT_KEYS=devkey:secret
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
   
   streamdiff:
     build:
