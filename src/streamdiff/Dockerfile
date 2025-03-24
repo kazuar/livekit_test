@@ -18,6 +18,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync
 
 COPY main.py ./
+COPY basic_room.py ./
 
-CMD ["bash"]
+CMD ["uv", "run", "python", "basic_room.py"]
 

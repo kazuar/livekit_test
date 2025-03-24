@@ -1,0 +1,39 @@
+services:
+  livekit-server:
+    image: livekit/livekit-server:latest
+    networks:
+      - livekit-network
+    ports:
+      - "7881:7881"
+      - "8000:8000"
+    environment:
+      - LIVEKIT_KEYS=devkey:secret
+  
+  streamdiff:
+    build:
+      context: ./src/streamdiff
+    networks:
+      - livekit-network
+    depends_on:
+      - livekit-server
+    environment:
+      - LIVEKIT_URL=ws://livekit-server:7881
+      - LIVEKIT_API_KEY=devkey
+      - LIVEKIT_API_SECRET=secret
+    # # volumes:
+    # #   - ./streamdiff:/app/streamdiff
+    # command: ["python", "streamdiff.py"]
+
+  client:
+    build:
+      context: ./src/client
+    networks:
+      - livekit-network
+    ports:
+      - "5173:5173"
+    depends_on:
+      - livekit-server
+
+networks:
+  livekit-network:
+    driver: bridge
